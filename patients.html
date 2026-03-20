@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patients - TGHMS</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="main-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🏥 TGHMS</h2>
+                <p>Patient Management</p>
+            </div>
+
+            <nav class="nav-menu">
+                <li class="nav-item">
+                    <a href="/dashboard" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/patients" class="nav-link active">
+                        <span class="nav-icon">👥</span>
+                        <span>Patients</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/sessions" class="nav-link">
+                        <span class="nav-icon">⏱️</span>
+                        <span>Sessions</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/reports" class="nav-link">
+                        <span class="nav-icon">📋</span>
+                        <span>Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/users" class="nav-link">
+                        <span class="nav-icon">👤</span>
+                        <span>Users</span>
+                    </a>
+                </li>
+            </nav>
+
+            <div class="user-info">
+                <div class="user-details">
+                    <p><strong>User:</strong> <span id="username-display">-</span></p>
+                    <p><strong>Role:</strong> <span class="user-role" id="role-display">-</span></p>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1>Patient Management</h1>
+                    <p>Manage hemodialysis patient records</p>
+                </div>
+                <div class="datetime-display">
+                    <div class="digital-time" id="digitalTime">00:00:00</div>
+                    <div class="calendar-date" id="calendarDate">January 1, 2024</div>
+                    <div class="day-of-week" id="dayOfWeek">Monday</div>
+                </div>
+            </div>
+
+            <!-- Search and Actions -->
+            <div class="search-bar">
+                <input 
+                    type="text" 
+                    id="patientSearch" 
+                    placeholder="Search by Hospital Number, First Name, or Last Name..."
+                    onkeyup="searchPatients()"
+                >
+                <button class="btn btn-primary" onclick="openPatientModal()">+ Add Patient</button>
+                <button class="btn btn-success" onclick="exportPatientsToCsv()">📥 Export CSV</button>
+            </div>
+
+            <!-- Message Display -->
+            <div id="patientMessage" class="message"></div>
+
+            <!-- Patients Table -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h2>Registered Patients</h2>
+                    <div class="table-actions">
+                        <button class="btn btn-secondary btn-small" onclick="loadPatients()">Refresh</button>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hospital #</th>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Sex</th>
+                            <th>Birth Date</th>
+                            <th>PhilHealth #</th>
+                            <th>Contact</th>
+                            <th>Address</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patientTableBody">
+                        <tr class="empty-row">
+                            <td colspan="9">No patients found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Patient Modal -->
+    <div id="patientModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Patient</h2>
+                <button class="modal-close" onclick="closePatientModal()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <form id="patientForm" onsubmit="handlePatientSubmit(event)">
+                    <div id="patientMessage" class="message"></div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Hospital Number *</label>
+                            <input type="text" id="patientHospitalNumber" required>
+                        </div>
+                        <div class="form-group">
+                            <label>PhilHealth Number</label>
+                            <input type="text" id="patientPhilhealth">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name *</label>
+                            <input type="text" id="patientFirstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name *</label>
+                            <input type="text" id="patientLastName" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Middle Name</label>
+                            <input type="text" id="patientMiddleName">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Birth Date *</label>
+                            <input type="date" id="patientBirthDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Age *</label>
+                            <input type="number" id="patientAge" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Sex *</label>
+                            <select id="patientSex" required>
+                                <option value="">-- Select --</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Contact Number</label>
+                            <input type="tel" id="patientContact">
+                        </div>
+                        <div class="form-group">
+                            <label>Address</label>
+                            <input type="text" id="patientAddress">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Patient</button>
+                        <button type="button" class="btn btn-secondary" onclick="closePatientModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Check authentication and load patients
+        if (checkAuth()) {
+            loadPatients();
+        }
+    </script>
+</body>
+</html>

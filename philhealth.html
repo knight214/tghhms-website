@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhilHealth Claims - TGHMS</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            padding: 20px;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card.transmitted {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .stat-card.not-transmitted {
+            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+        }
+        
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .stat-subtitle {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .transmission-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge-transmitted {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-not-transmitted {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: right;
+            margin-top: 20px;
+        }
+        
+        .form-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .btn-submit {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        .btn-submit:hover {
+            background-color: #5568d3;
+        }
+        
+        .btn-cancel {
+            background-color: #ccc;
+            color: #333;
+        }
+        
+        .btn-cancel:hover {
+            background-color: #bbb;
+        }
+        
+        .btn-transmit {
+            background-color: #11998e;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn-transmit:hover {
+            background-color: #0d7a6f;
+        }
+        
+        .btn-edit {
+            background-color: #667eea;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn-edit:hover {
+            background-color: #5568d3;
+        }
+        
+        .btn-delete {
+            background-color: #ee0979;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn-delete:hover {
+            background-color: #cc0764;
+        }
+        
+        .admin-only {
+            display: none;
+        }
+        
+        .admin-only.show {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🏥 TGHMS</h2>
+                <p>PhilHealth Claims</p>
+            </div>
+
+            <nav class="nav-menu">
+                <li class="nav-item">
+                    <a href="/dashboard" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/patients" class="nav-link">
+                        <span class="nav-icon">👥</span>
+                        <span>Patients</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/sessions" class="nav-link">
+                        <span class="nav-icon">⏱️</span>
+                        <span>Sessions</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/philhealth" class="nav-link active">
+                        <span class="nav-icon">💳</span>
+                        <span>PhilHealth</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/reports" class="nav-link">
+                        <span class="nav-icon">📋</span>
+                        <span>Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/users" class="nav-link">
+                        <span class="nav-icon">👤</span>
+                        <span>Users</span>
+                    </a>
+                </li>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button onclick="handleLogout()" class="logout-btn">🚪 Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <h1>💳 PhilHealth Claims Monitoring</h1>
+                <div class="header-info">
+                    <span id="datetime-display"></span>
+                    <span id="username-display">User</span> (<span id="role-display">Role</span>)
+                </div>
+            </header>
+
+            <!-- Statistics Cards -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>Total Claims</h3>
+                    <div class="stat-value" id="total-claims">0</div>
+                    <div class="stat-subtitle">All PhilHealth claims</div>
+                </div>
+                <div class="stat-card transmitted">
+                    <h3>Transmitted</h3>
+                    <div class="stat-value" id="transmitted-count">0</div>
+                    <div class="stat-subtitle">Amount: ₱<span id="transmitted-amount">0.00</span></div>
+                </div>
+                <div class="stat-card not-transmitted">
+                    <h3>Not Transmitted</h3>
+                    <div class="stat-value" id="not-transmitted-count">0</div>
+                    <div class="stat-subtitle">Amount: ₱<span id="not-transmitted-amount">0.00</span></div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons admin-only" id="admin-buttons">
+                <button onclick="openAddClaimModal()" class="btn" style="background-color: #667eea; color: white;">✚ Add New Claim</button>
+            </div>
+
+            <!-- Message Display -->
+            <div id="claimsMessage" class="message"></div>
+
+            <!-- Claims Table -->
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Claim #</th>
+                            <th>Patient</th>
+                            <th>Hospital #</th>
+                            <th>PhilHealth #</th>
+                            <th>Claim Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Transmitted Date</th>
+                            <th>Remarks</th>
+                            <th class="admin-only" id="actions-header">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="claimsTable">
+                        <tr class="empty-row">
+                            <td colspan="10" style="text-align: center; padding: 20px; color: #999;">Loading claims...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Claim Modal -->
+    <div id="claimModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Claim</h2>
+                <button class="close-btn" onclick="closeClaimModal()">&times;</button>
+            </div>
+            <form id="claimForm" onsubmit="handleSaveClaim(event)">
+                <div class="form-group">
+                    <label for="patientSelect">Patient *</label>
+                    <select id="patientSelect" required onchange="updateSessionList()">
+                        <option value="">Select Patient</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sessionSelect">Session *</label>
+                    <select id="sessionSelect" required>
+                        <option value="">Select Session</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="claimNumber">Claim Number</label>
+                    <input type="text" id="claimNumber" placeholder="Auto-generated">
+                </div>
+                <div class="form-group">
+                    <label for="claimDate">Claim Date *</label>
+                    <input type="date" id="claimDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="claimAmount">Claim Amount (₱)</label>
+                    <input type="number" id="claimAmount" step="0.01" min="0" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="transmissionStatus">Transmission Status *</label>
+                    <select id="transmissionStatus" required>
+                        <option value="Not Transmitted">Not Transmitted</option>
+                        <option value="Transmitted">Transmitted</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="remarks">Remarks</label>
+                    <textarea id="remarks" placeholder="Additional notes..."></textarea>
+                </div>
+                <div class="form-buttons">
+                    <button type="button" class="btn-cancel" onclick="closeClaimModal()">Cancel</button>
+                    <button type="submit" class="btn-submit">Save Claim</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // PhilHealth specific functions
+        let allPatients = [];
+        let allSessions = [];
+        let currentClaimId = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!checkAuth()) return;
+            
+            // Show/hide admin buttons based on role
+            const adminButtons = document.getElementById('admin-buttons');
+            const actionsHeader = document.getElementById('actions-header');
+            
+            if (currentUser.role === 'Admin') {
+                adminButtons.classList.add('show');
+                actionsHeader.classList.add('show');
+            }
+            
+            loadPatients();
+            loadPhilHealthClaims();
+            loadStatistics();
+            
+            // Refresh every 30 seconds
+            setInterval(() => {
+                loadPhilHealthClaims();
+                loadStatistics();
+            }, 30000);
+        });
+
+        // Load patients for dropdown
+        async function loadPatients() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/patients`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const patients = await response.json();
+                allPatients = patients;
+                
+                const select = document.getElementById('patientSelect');
+                select.innerHTML = '<option value="">Select Patient</option>';
+                patients.forEach(patient => {
+                    const option = document.createElement('option');
+                    option.value = patient.id;
+                    option.textContent = `${patient.first_name} ${patient.last_name} (${patient.hospital_number})`;
+                    option.dataset.patientId = patient.id;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading patients:', error);
+            }
+        }
+
+        // Load sessions for selected patient
+        async function updateSessionList() {
+            const patientId = document.getElementById('patientSelect').value;
+            const sessionSelect = document.getElementById('sessionSelect');
+            
+            if (!patientId) {
+                sessionSelect.innerHTML = '<option value="">Select Session</option>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/sessions/patient/${patientId}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const sessions = await response.json();
+                
+                sessionSelect.innerHTML = '<option value="">Select Session</option>';
+                sessions.forEach(session => {
+                    const option = document.createElement('option');
+                    option.value = session.id;
+                    option.textContent = `${session.session_date} - ${session.session_type}`;
+                    sessionSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+            }
+        }
+
+        // Load PhilHealth claims
+        async function loadPhilHealthClaims() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/philhealth`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const claims = await response.json();
+                
+                const table = document.getElementById('claimsTable');
+                
+                if (!claims || claims.length === 0) {
+                    table.innerHTML = '<tr class="empty-row"><td colspan="10" style="text-align: center; padding: 20px; color: #999;">No claims found</td></tr>';
+                    return;
+                }
+                
+                table.innerHTML = claims.map(claim => `
+                    <tr>
+                        <td>${claim.claim_number || '-'}</td>
+                        <td>${claim.first_name} ${claim.last_name}</td>
+                        <td>${claim.hospital_number}</td>
+                        <td>${claim.philhealth_number || '-'}</td>
+                        <td>${new Date(claim.claim_date).toLocaleDateString()}</td>
+                        <td>₱${parseFloat(claim.claim_amount || 0).toFixed(2)}</td>
+                        <td>
+                            <span class="transmission-badge ${claim.transmission_status === 'Transmitted' ? 'badge-transmitted' : 'badge-not-transmitted'}">
+                                ${claim.transmission_status}
+                            </span>
+                        </td>
+                        <td>${claim.transmitted_date ? new Date(claim.transmitted_date).toLocaleDateString() : '-'}</td>
+                        <td>${claim.remarks || '-'}</td>
+                        <td class="admin-only" style="display: ${currentUser.role === 'Admin' ? 'table-cell' : 'none'};">
+                            <button onclick="editClaim(${claim.id})" class="btn-edit">✎ Edit</button>
+                            ${claim.transmission_status !== 'Transmitted' ? `<button onclick="transmitClaim(${claim.id})" class="btn-transmit">✓ Transmit</button>` : ''}
+                            <button onclick="deleteClaim(${claim.id})" class="btn-delete">✕ Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading claims:', error);
+                showMessage(document.getElementById('claimsMessage'), 'Error loading claims', 'error');
+            }
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/philhealth/stats/transmission`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const stats = await response.json();
+                
+                document.getElementById('total-claims').textContent = stats.total_claims;
+                document.getElementById('transmitted-count').textContent = stats.transmitted;
+                document.getElementById('not-transmitted-count').textContent = stats.not_transmitted;
+                document.getElementById('transmitted-amount').textContent = parseFloat(stats.transmitted_amount || 0).toFixed(2);
+                document.getElementById('not-transmitted-amount').textContent = parseFloat(stats.not_transmitted_amount || 0).toFixed(2);
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        // Open add claim modal
+        function openAddClaimModal() {
+            currentClaimId = null;
+            document.getElementById('modalTitle').textContent = 'Add New Claim';
+            document.getElementById('claimForm').reset();
+            document.getElementById('claimModal').classList.add('show');
+        }
+
+        // Close modal
+        function closeClaimModal() {
+            document.getElementById('claimModal').classList.remove('show');
+            currentClaimId = null;
+        }
+
+        // Save claim
+        async function handleSaveClaim(event) {
+            event.preventDefault();
+            
+            const claimData = {
+                patient_id: document.getElementById('patientSelect').value,
+                session_id: document.getElementById('sessionSelect').value,
+                claim_number: document.getElementById('claimNumber').value,
+                claim_date: document.getElementById('claimDate').value,
+                claim_amount: document.getElementById('claimAmount').value,
+                transmission_status: document.getElementById('transmissionStatus').value,
+                remarks: document.getElementById('remarks').value
+            };
+            
+            try {
+                const method = currentClaimId ? 'PUT' : 'POST';
+                const url = currentClaimId 
+                    ? `${API_BASE_URL}/philhealth/${currentClaimId}`
+                    : `${API_BASE_URL}/philhealth`;
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(claimData)
+                });
+                
+                if (response.ok) {
+                    showMessage(document.getElementById('claimsMessage'), 
+                        currentClaimId ? 'Claim updated successfully' : 'Claim created successfully', 
+                        'success');
+                    closeClaimModal();
+                    loadPhilHealthClaims();
+                    loadStatistics();
+                } else {
+                    const error = await response.json();
+                    showMessage(document.getElementById('claimsMessage'), error.error || 'Error saving claim', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving claim:', error);
+                showMessage(document.getElementById('claimsMessage'), 'Error saving claim', 'error');
+            }
+        }
+
+        // Edit claim
+        async function editClaim(id) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/philhealth/${id}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const claim = await response.json();
+                
+                currentClaimId = id;
+                document.getElementById('modalTitle').textContent = 'Edit Claim';
+                document.getElementById('patientSelect').value = claim.patient_id;
+                document.getElementById('claimNumber').value = claim.claim_number || '';
+                document.getElementById('claimDate').value = claim.claim_date;
+                document.getElementById('claimAmount').value = claim.claim_amount || '';
+                document.getElementById('transmissionStatus').value = claim.transmission_status;
+                document.getElementById('remarks').value = claim.remarks || '';
+                
+                updateSessionList().then(() => {
+                    document.getElementById('sessionSelect').value = claim.session_id;
+                });
+                
+                document.getElementById('claimModal').classList.add('show');
+            } catch (error) {
+                console.error('Error loading claim:', error);
+                showMessage(document.getElementById('claimsMessage'), 'Error loading claim', 'error');
+            }
+        }
+
+        // Mark claim as transmitted
+        async function transmitClaim(id) {
+            if (!confirm('Mark this claim as transmitted?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/philhealth/${id}/transmit`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    showMessage(document.getElementById('claimsMessage'), 'Claim marked as transmitted', 'success');
+                    loadPhilHealthClaims();
+                    loadStatistics();
+                } else {
+                    showMessage(document.getElementById('claimsMessage'), 'Error marking claim', 'error');
+                }
+            } catch (error) {
+                console.error('Error transmitting claim:', error);
+                showMessage(document.getElementById('claimsMessage'), 'Error transmitting claim', 'error');
+            }
+        }
+
+        // Delete claim
+        async function deleteClaim(id) {
+            if (!confirm('Are you sure you want to delete this claim?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/philhealth/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    showMessage(document.getElementById('claimsMessage'), 'Claim deleted successfully', 'success');
+                    loadPhilHealthClaims();
+                    loadStatistics();
+                } else {
+                    showMessage(document.getElementById('claimsMessage'), 'Error deleting claim', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting claim:', error);
+                showMessage(document.getElementById('claimsMessage'), 'Error deleting claim', 'error');
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('claimModal');
+            if (event.target === modal) {
+                closeClaimModal();
+            }
+        }
+    </script>
+</body>
+</html>

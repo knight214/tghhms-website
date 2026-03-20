@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users - TGHMS</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="main-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🏥 TGHMS</h2>
+                <p>Patient Management</p>
+            </div>
+
+            <nav class="nav-menu">
+                <li class="nav-item">
+                    <a href="/dashboard" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/patients" class="nav-link">
+                        <span class="nav-icon">👥</span>
+                        <span>Patients</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/sessions" class="nav-link">
+                        <span class="nav-icon">⏱️</span>
+                        <span>Sessions</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/reports" class="nav-link">
+                        <span class="nav-icon">📋</span>
+                        <span>Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/users" class="nav-link active">
+                        <span class="nav-icon">👤</span>
+                        <span>Users</span>
+                    </a>
+                </li>
+            </nav>
+
+            <div class="user-info">
+                <div class="user-details">
+                    <p><strong>User:</strong> <span id="username-display">-</span></p>
+                    <p><strong>Role:</strong> <span class="user-role" id="role-display">-</span></p>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1>User Management</h1>
+                    <p>Manage system users and access control</p>
+                </div>
+                <div class="datetime-display">
+                    <div class="digital-time" id="digitalTime">00:00:00</div>
+                    <div class="calendar-date" id="calendarDate">January 1, 2024</div>
+                    <div class="day-of-week" id="dayOfWeek">Monday</div>
+                </div>
+            </div>
+
+            <!-- Search and Actions -->
+            <div class="search-bar">
+                <input 
+                    type="text" 
+                    id="userSearch" 
+                    placeholder="Search by username..."
+                    onkeyup="searchUsers()"
+                >
+                <button class="btn btn-primary" onclick="openUserModal()">+ Add User</button>
+            </div>
+
+            <!-- Message Display -->
+            <div id="userMessage" class="message"></div>
+
+            <!-- Users Table -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h2>System Users</h2>
+                    <div class="table-actions">
+                        <button class="btn btn-secondary btn-small" onclick="loadUsers()">Refresh</button>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Created Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        <tr class="empty-row">
+                            <td colspan="4">No users found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- User Modal -->
+    <div id="userModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New User</h2>
+                <button class="modal-close" onclick="closeUserModal()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <form id="userForm" onsubmit="handleUserSubmit(event)">
+                    <div id="userMessage" class="message"></div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Username *</label>
+                            <input type="text" id="userUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password *</label>
+                            <input type="password" id="userPassword" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Role *</label>
+                            <select id="userRole" required>
+                                <option value="">-- Select Role --</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Nurse">Nurse</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save User</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Role Modal -->
+    <div id="editRoleModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit User Role</h2>
+                <button class="modal-close" onclick="closeEditRoleModal()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <form id="editRoleForm" onsubmit="handleRoleUpdate(event)">
+                    <div id="editRoleMessage" class="message"></div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="editRoleUsername" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Role *</label>
+                            <select id="editRole" required>
+                                <option value="Admin">Admin</option>
+                                <option value="Nurse">Nurse</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Update Role</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeEditRoleModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Check authentication and load users
+        if (checkAuth()) {
+            loadUsers();
+        }
+    </script>
+</body>
+</html>

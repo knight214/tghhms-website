@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sessions - TGHMS</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="main-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🏥 TGHMS</h2>
+                <p>Patient Management</p>
+            </div>
+
+            <nav class="nav-menu">
+                <li class="nav-item">
+                    <a href="/dashboard" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/patients" class="nav-link">
+                        <span class="nav-icon">👥</span>
+                        <span>Patients</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/sessions" class="nav-link active">
+                        <span class="nav-icon">⏱️</span>
+                        <span>Sessions</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/reports" class="nav-link">
+                        <span class="nav-icon">📋</span>
+                        <span>Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/users" class="nav-link">
+                        <span class="nav-icon">👤</span>
+                        <span>Users</span>
+                    </a>
+                </li>
+            </nav>
+
+            <div class="user-info">
+                <div class="user-details">
+                    <p><strong>User:</strong> <span id="username-display">-</span></p>
+                    <p><strong>Role:</strong> <span class="user-role" id="role-display">-</span></p>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1>Hemodialysis Sessions</h1>
+                    <p>Manage and track dialysis treatment sessions</p>
+                </div>
+                <div class="datetime-display">
+                    <div class="digital-time" id="digitalTime">00:00:00</div>
+                    <div class="calendar-date" id="calendarDate">January 1, 2024</div>
+                    <div class="day-of-week" id="dayOfWeek">Monday</div>
+                </div>
+            </div>
+
+            <!-- Search and Actions -->
+            <div class="search-bar">
+                <input 
+                    type="text" 
+                    placeholder="Search by Hospital Number or Patient Name..."
+                    id="sessionSearch"
+                    onkeyup="displaySessions(this.value)"
+                >
+                <button class="btn btn-primary" onclick="openSessionModal()">+ New Session</button>
+                <button class="btn btn-success" onclick="exportSessionsToCsv()">📥 Export CSV</button>
+                <button class="btn btn-warning" onclick="printReport('sessions')">🖨️ Print</button>
+            </div>
+
+            <!-- Message Display -->
+            <div id="sessionMessage" class="message"></div>
+
+            <!-- Sessions Table -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h2>Dialysis Sessions</h2>
+                    <div class="table-actions">
+                        <button class="btn btn-secondary btn-small" onclick="loadSessions()">Refresh</button>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hospital #</th>
+                            <th>Patient Name</th>
+                            <th>PhilHealth #</th>
+                            <th>Type</th>
+                            <th>Access</th>
+                            <th>Date</th>
+                            <th>Time In</th>
+                            <th>Time Out</th>
+                            <th>Machine</th>
+                            <th>Nurse</th>
+                            <th>Complications</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessionTableBody">
+                        <tr class="empty-row">
+                            <td colspan="12">No sessions found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Session Modal -->
+    <div id="sessionModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Session</h2>
+                <button class="modal-close" onclick="closeSessionModal()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <form id="sessionForm" onsubmit="handleSessionSubmit(event)">
+                    <div id="sessionMessage" class="message"></div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Patient Name *</label>
+                            <input type="text" id="sessionPatientName" placeholder="Enter patient name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Session Type *</label>
+                            <select id="sessionType" required>
+                                <option value="">-- Select --</option>
+                                <option value="Elective">Elective</option>
+                                <option value="Emergency">Emergency</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Access Type *</label>
+                            <select id="accessType" required>
+                                <option value="">-- Select --</option>
+                                <option value="AVF">Arteriovenous Fistula (AVF)</option>
+                                <option value="Perm Cath">Permanent Catheter</option>
+                                <option value="IJ Cath">Internal Jugular Catheter</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Session Date *</label>
+                            <input type="date" id="sessionDate" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Time In *</label>
+                            <input type="time" id="timeIn" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Time Out</label>
+                            <input type="time" id="timeOut">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Machine Number</label>
+                            <input type="text" id="machineNumber" placeholder="e.g., HD-001">
+                        </div>
+                        <div class="form-group">
+                            <label>Dialyzer Used</label>
+                            <input type="text" id="dialyzerUsed" placeholder="e.g., Fresenius F60S">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Anticoagulant Used</label>
+                            <input type="text" id="anticoagulant" placeholder="e.g., Heparin">
+                        </div>
+                        <div class="form-group">
+                            <label>Nurse In Charge *</label>
+                            <input type="text" id="nurseInCharge" placeholder="Nurse name" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Complications</label>
+                            <textarea id="complications" placeholder="Document any complications during session"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Session</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeSessionModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Check authentication and load sessions
+        if (checkAuth()) {
+            loadSessions();
+            
+            // Set today's date by default
+            document.getElementById('sessionDate').valueAsDate = new Date();
+        }
+    </script>
+</body>
+</html>

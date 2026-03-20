@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TGHMS</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="main-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🏥 TGHMS</h2>
+                <p>Patient Management</p>
+            </div>
+
+            <nav class="nav-menu">
+                <li class="nav-item">
+                    <a href="/dashboard" class="nav-link active">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/patients" class="nav-link">
+                        <span class="nav-icon">👥</span>
+                        <span>Patients</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/sessions" class="nav-link">
+                        <span class="nav-icon">⏱️</span>
+                        <span>Sessions</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/reports" class="nav-link">
+                        <span class="nav-icon">📋</span>
+                        <span>Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/users" class="nav-link">
+                        <span class="nav-icon">👤</span>
+                        <span>Users</span>
+                    </a>
+                </li>
+            </nav>
+
+            <div class="user-info">
+                <div class="user-details">
+                    <p><strong>User:</strong> <span id="username-display">-</span></p>
+                    <p><strong>Role:</strong> <span class="user-role" id="role-display">-</span></p>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1>Dashboard</h1>
+                    <p>Welcome to Talavera General Hospital Hemodialysis Management System</p>
+                </div>
+                <div class="datetime-display">
+                    <div class="digital-time" id="digitalTime">00:00:00</div>
+                    <div class="calendar-date" id="calendarDate">January 1, 2024</div>
+                    <div class="day-of-week" id="dayOfWeek">Monday</div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalPatients">0</div>
+                    <div class="stat-label">Total Patients</div>
+                </div>
+                <div class="stat-card emergency">
+                    <div class="stat-number" id="emergencySessions">0</div>
+                    <div class="stat-label">Emergency Sessions</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-number" id="electiveSessions">0</div>
+                    <div class="stat-label">Elective Sessions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="todaySessions">0</div>
+                    <div class="stat-label">Today's Sessions</div>
+                </div>
+            </div>
+
+            <!-- Recent Sessions -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h2>Recent Dialysis Sessions</h2>
+                    <div class="table-actions">
+                        <button class="btn btn-secondary btn-small" onclick="loadDashboard()">Refresh</button>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hospital #</th>
+                            <th>Patient Name</th>
+                            <th>PhilHealth #</th>
+                            <th>Session Type</th>
+                            <th>Access Type</th>
+                            <th>Date</th>
+                            <th>Time In</th>
+                            <th>Nurse In Charge</th>
+                            <th>Complications</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentSessionsBody">
+                        <tr class="empty-row">
+                            <td colspan="9">No sessions yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Quick Info -->
+            <div class="dashboard-grid" style="margin-top: 30px;">
+                <div class="form-container">
+                    <h3>System Information</h3>
+                    <p><strong>📍 Facility:</strong> Hemodialysis Center</p>
+                    <p><strong>🔗 API Endpoint:</strong> http://localhost:5000/api</p>
+                    <p><strong>💾 Database:</strong> SQLite</p>
+                    <p><strong>🔐 Authentication:</strong> JWT Token-based</p>
+                </div>
+
+                <div class="form-container">
+                    <h3>Quick Actions</h3>
+                    <button class="btn btn-primary" onclick="location.href='/patients'" style="margin-bottom: 10px; width: 100%;">
+                        ➕ Add New Patient
+                    </button>
+                    <button class="btn btn-secondary" onclick="location.href='/sessions'" style="width: 100%;">
+                        ➕ Record Session
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Check authentication and load dashboard
+        if (checkAuth()) {
+            loadDashboard();
+            setInterval(loadDashboard, 30000); // Refresh every 30 seconds
+        }
+
+        // Update recent sessions display
+        async function loadDashboard() {
+            const data = await makeRequest('/sessions');
+            if (!data.error) {
+                sessions = data;
+                displayRecentSessions();
+                updateSessionStats();
+            }
+
+            const patientData = await makeRequest('/patients');
+            if (!patientData.error) {
+                document.getElementById('totalPatients').textContent = patientData.length;
+            }
+        }
+
+        function displayRecentSessions() {
+            const tbody = document.getElementById('recentSessionsBody');
+            tbody.innerHTML = '';
+
+            const recent = sessions.slice(0, 10);
+
+            if (recent.length === 0) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No sessions found</td></tr>';
+                return;
+            }
+
+            recent.forEach(session => {
+                const row = `
+                    <tr>
+                        <td>${session.hospital_number}</td>
+                        <td>${session.first_name} ${session.last_name}</td>
+                        <td>${session.philhealth_number || '-'}</td>
+                        <td><span class="status-badge ${session.session_type.toLowerCase()}">${session.session_type}</span></td>
+                        <td>${session.access_type}</td>
+                        <td>${formatDate(session.session_date)}</td>
+                        <td>${session.time_in}</td>
+                        <td>${session.nurse_in_charge}</td>
+                        <td>
+                            ${session.complications ? '<span class="complication-badge">⚠️ Yes</span>' : '<span class="complication-badge none">No</span>'}
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+    </script>
+</body>
+</html>

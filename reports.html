@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - TGHMS</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="main-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🏥 TGHMS</h2>
+                <p>Patient Management</p>
+            </div>
+
+            <nav class="nav-menu">
+                <li class="nav-item">
+                    <a href="/dashboard" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/patients" class="nav-link">
+                        <span class="nav-icon">👥</span>
+                        <span>Patients</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/sessions" class="nav-link">
+                        <span class="nav-icon">⏱️</span>
+                        <span>Sessions</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/reports" class="nav-link active">
+                        <span class="nav-icon">📋</span>
+                        <span>Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/users" class="nav-link">
+                        <span class="nav-icon">👤</span>
+                        <span>Users</span>
+                    </a>
+                </li>
+            </nav>
+
+            <div class="user-info">
+                <div class="user-details">
+                    <p><strong>User:</strong> <span id="username-display">-</span></p>
+                    <p><strong>Role:</strong> <span class="user-role" id="role-display">-</span></p>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1>Reports & Analytics</h1>
+                    <p>Generate and view system reports</p>
+                </div>
+                <div class="datetime-display">
+                    <div class="digital-time" id="digitalTime">00:00:00</div>
+                    <div class="calendar-date" id="calendarDate">January 1, 2024</div>
+                    <div class="day-of-week" id="dayOfWeek">Monday</div>
+                </div>
+            </div>
+
+            <!-- Report Grid -->
+            <div class="dashboard-grid">
+                <div class="form-container">
+                    <h3>📊 Patient Summary Report</h3>
+                    <p>Generate a comprehensive report of all registered patients with demographic information.</p>
+                    <button class="btn btn-primary" onclick="exportPatientsToCsv()">
+                        📥 Export as CSV
+                    </button>
+                    <button class="btn btn-secondary" onclick="printPatientReport()">
+                        🖨️ Print Report
+                    </button>
+                </div>
+
+                <div class="form-container">
+                    <h3>⏱️ Session Report</h3>
+                    <p>View detailed records of all hemodialysis sessions with treatment information.</p>
+                    <button class="btn btn-primary" onclick="exportSessionsToCsv()">
+                        📥 Export as CSV
+                    </button>
+                    <button class="btn btn-secondary" onclick="printSessionReport()">
+                        🖨️ Print Report
+                    </button>
+                </div>
+
+                <div class="form-container">
+                    <h3>⚠️ Complications Report</h3>
+                    <p>Identify sessions with reported complications for quality assurance.</p>
+                    <button class="btn btn-warning" onclick="generateComplicationsReport()">
+                        📋 View Complications
+                    </button>
+                </div>
+
+                <div class="form-container">
+                    <h3>📈 Statistics Dashboard</h3>
+                    <p>Interactive dashboard with key performance indicators and trends.</p>
+                    <button class="btn btn-success" onclick="showStatistics()">
+                        📊 View Statistics
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reports Display Area -->
+            <div id="reportsArea" style="margin-top: 30px;">
+                <!-- Reports will be displayed here -->
+            </div>
+
+            <!-- Patient Summary Table (Print View) -->
+            <div id="patientReportPrint" style="display: none; margin-top: 30px;">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2>Patient Summary Report</h2>
+                        <p style="font-size: 12px; color: #7f8c8d;">Generated: <span id="reportDate"></span></p>
+                    </div>
+
+                    <table id="patientPrintTable">
+                        <thead>
+                            <tr>
+                                <th>Hospital #</th>
+                                <th>Patient Name</th>
+                                <th>Age</th>
+                                <th>Sex</th>
+                                <th>Contact</th>
+                                <th>Address</th>
+                                <th>PhilHealth #</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientPrintBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Session Summary Table (Print View) -->
+            <div id="sessionReportPrint" style="display: none; margin-top: 30px;">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2>Session Summary Report</h2>
+                        <p style="font-size: 12px; color: #7f8c8d;">Generated: <span id="reportDate2"></span></p>
+                    </div>
+
+                    <table id="sessionPrintTable">
+                        <thead>
+                            <tr>
+                                <th>Hospital #</th>
+                                <th>Patient Name</th>
+                                <th>PhilHealth #</th>
+                                <th>Type</th>
+                                <th>Access</th>
+                                <th>Date</th>
+                                <th>Time In</th>
+                                <th>Time Out</th>
+                                <th>Nurse</th>
+                                <th>Complications</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessionPrintBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Statistics Display -->
+            <div id="statisticsArea" style="display: none; margin-top: 30px;">
+                <div class="form-container">
+                    <h2>System Statistics</h2>
+                    <div class="dashboard-grid" style="margin-top: 20px;">
+                        <div style="padding: 20px; border: 1px solid #bdc3c7; border-radius: 5px;">
+                            <h4>Patient Demographics</h4>
+                            <p>Total Patients: <strong id="totalPatientsStats">0</strong></p>
+                            <p>Male: <strong id="maleCountStats">0</strong></p>
+                            <p>Female: <strong id="femaleCountStats">0</strong></p>
+                        </div>
+
+                        <div style="padding: 20px; border: 1px solid #bdc3c7; border-radius: 5px;">
+                            <h4>Session Statistics</h4>
+                            <p>Total Sessions: <strong id="totalSessionsStats">0</strong></p>
+                            <p>Elective: <strong id="electiveCountStats">0</strong></p>
+                            <p>Emergency: <strong id="emergencyCountStats">0</strong></p>
+                        </div>
+
+                        <div style="padding: 20px; border: 1px solid #bdc3c7; border-radius: 5px;">
+                            <h4>Access Type Distribution</h4>
+                            <p>AVF: <strong id="avfCountStats">0</strong></p>
+                            <p>Perm Cath: <strong id="permCathStats">0</strong></p>
+                            <p>IJ Cath: <strong id="ijCathStats">0</strong></p>
+                        </div>
+
+                        <div style="padding: 20px; border: 1px solid #bdc3c7; border-radius: 5px;">
+                            <h4>Complication Statistics</h4>
+                            <p>Sessions with Complications: <strong id="complicationCountStats">0</strong></p>
+                            <p>Complication Rate: <strong id="complicationRateStats">0%</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Check authentication
+        if (!checkAuth()) {
+            window.location.href = '/';
+        }
+
+        function printPatientReport() {
+            const patientDiv = document.getElementById('patientReportPrint');
+            const printBody = document.getElementById('patientPrintBody');
+            const dateEl = document.getElementById('reportDate');
+            
+            printBody.innerHTML = '';
+            patients.forEach(p => {
+                printBody.innerHTML += `
+                    <tr>
+                        <td>${p.hospital_number}</td>
+                        <td>${p.first_name} ${p.last_name}</td>
+                        <td>${p.age}</td>
+                        <td>${p.sex}</td>
+                        <td>${p.contact_number || '-'}</td>
+                        <td>${p.address || '-'}</td>
+                        <td>${p.philhealth_number || '-'}</td>
+                    </tr>
+                `;
+            });
+            
+            dateEl.textContent = new Date().toLocaleString();
+            patientDiv.style.display = 'block';
+            setTimeout(() => window.print(), 500);
+        }
+
+        function printSessionReport() {
+            const sessionDiv = document.getElementById('sessionReportPrint');
+            const printBody = document.getElementById('sessionPrintBody');
+            const dateEl = document.getElementById('reportDate2');
+            
+            printBody.innerHTML = '';
+            sessions.forEach(s => {
+                printBody.innerHTML += `
+                    <tr>
+                        <td>${s.hospital_number}</td>
+                        <td>${s.first_name} ${s.last_name}</td>
+                        <td>${s.philhealth_number || '-'}</td>
+                        <td>${s.session_type}</td>
+                        <td>${s.access_type}</td>
+                        <td>${formatDate(s.session_date)}</td>
+                        <td>${s.time_in}</td>
+                        <td>${s.time_out || '-'}</td>
+                        <td>${s.nurse_in_charge}</td>
+                        <td>${s.complications || 'None'}</td>
+                    </tr>
+                `;
+            });
+            
+            dateEl.textContent = new Date().toLocaleString();
+            sessionDiv.style.display = 'block';
+            setTimeout(() => window.print(), 500);
+        }
+
+        function generateComplicationsReport() {
+            const reportsArea = document.getElementById('reportsArea');
+            const complications = sessions.filter(s => s.complications);
+            
+            let html = '<div class="table-container"><div class="table-header"><h2>Complications Report</h2></div>';
+            html += '<table><thead><tr><th>Hospital #</th><th>Patient</th><th>Date</th><th>Complications</th><th>Nurse</th></tr></thead><tbody>';
+            
+            if (complications.length === 0) {
+                html += '<tr class="empty-row"><td colspan="5">No complications reported</td></tr>';
+            } else {
+                complications.forEach(s => {
+                    html += `
+                        <tr>
+                            <td>${s.hospital_number}</td>
+                            <td>${s.first_name} ${s.last_name}</td>
+                            <td>${formatDate(s.session_date)}</td>
+                            <td>${s.complications}</td>
+                            <td>${s.nurse_in_charge}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            html += '</tbody></table></div>';
+            reportsArea.innerHTML = html;
+        }
+
+        function showStatistics() {
+            const statsArea = document.getElementById('statisticsArea');
+            
+            // Calculate statistics
+            let maleCount = 0, femaleCount = 0;
+            patients.forEach(p => {
+                if (p.sex === 'Male') maleCount++;
+                else femaleCount++;
+            });
+            
+            let electiveCount = 0, emergencyCount = 0;
+            let avfCount = 0, permCathCount = 0, ijCathCount = 0;
+            let complicationCount = 0;
+            
+            sessions.forEach(s => {
+                if (s.session_type === 'Elective') electiveCount++;
+                if (s.session_type === 'Emergency') emergencyCount++;
+                if (s.access_type === 'AVF') avfCount++;
+                if (s.access_type === 'Perm Cath') permCathCount++;
+                if (s.access_type === 'IJ Cath') ijCathCount++;
+                if (s.complications) complicationCount++;
+            });
+            
+            const complicationRate = sessions.length > 0 ? ((complicationCount / sessions.length) * 100).toFixed(1) : 0;
+            
+            // Update statistics display
+            document.getElementById('totalPatientsStats').textContent = patients.length;
+            document.getElementById('maleCountStats').textContent = maleCount;
+            document.getElementById('femaleCountStats').textContent = femaleCount;
+            document.getElementById('totalSessionsStats').textContent = sessions.length;
+            document.getElementById('electiveCountStats').textContent = electiveCount;
+            document.getElementById('emergencyCountStats').textContent = emergencyCount;
+            document.getElementById('avfCountStats').textContent = avfCount;
+            document.getElementById('permCathStats').textContent = permCathCount;
+            document.getElementById('ijCathStats').textContent = ijCathCount;
+            document.getElementById('complicationCountStats').textContent = complicationCount;
+            document.getElementById('complicationRateStats').textContent = complicationRate + '%';
+            
+            statsArea.style.display = 'block';
+        }
+
+        // Load data on page load
+        async function loadReportData() {
+            const patientData = await makeRequest('/patients');
+            const sessionData = await makeRequest('/sessions');
+            
+            if (!patientData.error) patients = patientData;
+            if (!sessionData.error) sessions = sessionData;
+        }
+
+        loadReportData();
+    </script>
+</body>
+</html>
